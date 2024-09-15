@@ -1,3 +1,6 @@
+// The main things that are changed from phase one to phase two are the new "time limit" of
+// 10 moves, as well as a message that lets the user know what all of their options to choose from are.
+
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -131,6 +134,9 @@ class Maze {
     Room currentRoom;
     Player player;
     boolean isFinished = false;
+    // this is a new part that adds a limit to the amount of moves the user can make
+    // before the maze collapses
+    int moveLimit = 10;
 
     Maze() {
         player = new Player();
@@ -138,15 +144,14 @@ class Maze {
         Room interactRoom = new InteractRoom("Interact Room");
         Room exitRoom = new ExitRoom("Exit Room");
 
-        // Create a grid-like connection of rooms
         lootRoom.setEast(interactRoom);
         interactRoom.setWest(lootRoom);
         interactRoom.setEast(exitRoom);
         exitRoom.setWest(interactRoom);
-        lootRoom.setSouth(exitRoom); // Connect lootRoom to exitRoom via south
-        exitRoom.setNorth(lootRoom); // Connect exitRoom to lootRoom via north
+        lootRoom.setSouth(exitRoom);
+        exitRoom.setNorth(lootRoom);
 
-        currentRoom = lootRoom; // Start in lootRoom
+        currentRoom = lootRoom;
     }
 
     String exitCurrentRoom() {
@@ -205,16 +210,30 @@ public class Main {
         Maze maze = new Maze();
         Scanner scanner = new Scanner(System.in);
 
-        while (!maze.isFinished()) {
+        // a new message that lets the user know how many possible moves they get
+        System.out.println("The maze is falling apart. Escape as fast as you can! (You get 10 moves)");
+
+        while (!maze.isFinished() && maze.moveLimit > 0) {
             System.out.println(maze.getCurrentRoomDescription());
             System.out.println("Exits: " + maze.getCurrentRoomExits());
+
+            // new part shows players the options of what they can do
+            System.out.println("\nCommands:");
+            System.out.println("n/s/e/w/u/d - Move in a direction (north, south, east, west, up, down)");
+            System.out.println("i - Interact with the room");
+            System.out.println("l - Loot the room");
+            System.out.println("x - Try to exit the room");
+            System.out.println("v - Check your inventory");
             System.out.print("Enter command: ");
+
             char command = scanner.next().charAt(0);
 
             switch (command) {
                 case 'n', 's', 'e', 'w', 'u', 'd' -> {
                     if (!maze.move(command)) {
                         System.out.println("You can't go that way.");
+                    } else {
+                        maze.moveLimit--; // Reduce move limit after each move
                     }
                 }
                 case 'i' -> System.out.println(maze.interactWithCurrentRoom());
@@ -223,6 +242,12 @@ public class Main {
                 case 'v' -> System.out.println("Inventory: " + maze.getPlayerInventory());
                 default -> System.out.println("Invalid command.");
             }
+        }
+
+        if (maze.isFinished()) {
+            System.out.println("Congratulations! You escaped the maze.");
+        } else {
+            System.out.println("The maze collapsed! You couldn't escape in time.");
         }
 
         System.out.println("Game over. Your score: " + maze.getPlayerScore());
